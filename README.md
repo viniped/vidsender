@@ -12,7 +12,7 @@ Este script foi projetado para fazer o upload das suas coleções audiovisuais p
 1. Clone este repositório:
 
 
-   git clone https://github.com/viniped/vidsender.git
+   	git clone https://github.com/viniped/vidsender.git
 
 
 Instale os pacotes Python necessários:
