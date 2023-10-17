@@ -1,4 +1,4 @@
-﻿import os
+import os
 import json
 import time
 import subprocess
@@ -7,7 +7,7 @@ from pyrogram import Client, errors
 from pathlib import Path
 from natsort import natsorted
 from typing import Tuple, Union
-from utils import delete_residual_files, Banner, show_banner
+from utils import authenticate, delete_residual_files, Banner, show_banner
 from modules.channel_description import generate_description
 from modules.summary_generator import generate_summary
 from auto_zip import prepare_files_for_upload
@@ -130,10 +130,8 @@ class VideoUploader:
                         progress_args=(video_path.name,),
                         thumb=thumb
                     )
-
-                # Após o envio, podemos excluir a miniatura para economizar espaço
+               
                 os.remove(thumbnail_path)
-
 
     def upload_zip_files(self):
         zip_folder = Path("zip_files")
@@ -168,6 +166,7 @@ class VideoUploader:
         self.client.pin_chat_message(self.ch_id, sent_msg.id)
                     
 show_banner()
+authenticate()
 folder_path = input("Informe o caminho da pasta que deseja fazer o upload: ")
 delete_residual_files(folder_path)
 clean_console()
