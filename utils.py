@@ -2,6 +2,9 @@ import os
 from colorama import Fore
 import pyfiglet
 import random
+from pyrogram import Client
+
+session_name = 'user'
 
 def delete_residual_files(folder_path):
     for root, dirs, files in os.walk(folder_path):
@@ -13,6 +16,21 @@ def delete_residual_files(folder_path):
                 except OSError:
                     pass
 
+def authenticate():
+    # Get credentialas from user
+    def get_credentials():
+        api_id = input("Digite seu API ID: ")
+        api_hash = input("Digite seu API Hash: ")
+        return api_id, api_hash
+
+    # if session file does not exists, obtain the credentials 
+    if not os.path.exists(f"{session_name}.session"):
+        api_id, api_hash = get_credentials()
+        with Client(session_name, api_id, api_hash) as app:
+            print("Você está autenticado!")
+    else:
+        print("Usando sessão existente.")
+        
 class Banner:
     def __init__(self, banner):
         self.banner = banner
@@ -33,4 +51,3 @@ class Banner:
 def show_banner():
     banner = Banner('Vidsender')
     banner.print_banner()
-
