@@ -9,7 +9,7 @@ from natsort import natsorted
 from typing import Tuple, Union
 from utils import authenticate, delete_residual_files, Banner, show_banner
 from modules.channel_description import generate_description
-from modules.summary_generator import generate_summary
+from modules.summary_generator import get_sorted_list_of_files, split_summary, generate_summary
 from auto_zip import prepare_files_for_upload
 from modules.vidconverter.video_converter import convert_videos_in_folder
 from modules.video_splitter import split_videos
@@ -80,6 +80,11 @@ class VideoUploader:
         )
         ff.run()
         return thumbnail_path
+    
+    def format_summary_from_template(self, summary: str) -> str:
+        with open('summary_template.txt', 'r', encoding='utf-8') as template_file:
+            template = template_file.read()
+            return template.format(summary_content=summary)
 
     def upload_files(self) -> None:
         # 1. Obter todas as pastas dentro do folder_path
@@ -162,8 +167,21 @@ class VideoUploader:
 
         # Send summary and pin message                
         summary = generate_summary(self.folder_path)
-        sent_msg = self.client.send_message(self.ch_id, summary)
-        self.client.pin_chat_message(self.ch_id, sent_msg.id)
+
+        # Formata o resumo com o template
+        formatted_summary = self.format_summary_from_template(summary)
+
+        max_length = 4000  # Máximo permitido pelo Telegram em uma única mensagem
+        if len(formatted_summary) > max_length:
+            summaries = split_summary(formatted_summary, max_length)
+            for idx, s in enumerate(summaries):
+                sent_msg = self.client.send_message(self.ch_id, s)
+                # Pin the first part of the summary only
+                if idx == 0:
+                    self.client.pin_chat_message(self.ch_id, sent_msg.id)
+        else:
+            sent_msg = self.client.send_message(self.ch_id, formatted_summary)
+            self.client.pin_chat_message(self.ch_id, sent_msg.id)
                     
 show_banner()
 authenticate()
