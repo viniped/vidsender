@@ -158,7 +158,12 @@ class VideoUploader:
             with open(zip_file, "rb") as file:
                 caption = f"#M{index:02} {zip_file.name}"
                 try:
-                    self.client.send_document(self.ch_id, file, caption=caption)
+                    self.client.send_document(
+                        self.ch_id,
+                        file,
+                        caption=caption,
+                        progress=progress,
+                        progress_args=(zip_file.name))
                     #zip_file.unlink()
                     
                 except Exception as e:
@@ -188,8 +193,8 @@ authenticate()
 folder_path = input("Informe o caminho da pasta que deseja fazer o upload: ")
 delete_residual_files(folder_path)
 clean_console()
-prepare_files_for_upload(folder_path)
 convert_videos_in_folder(folder_path)
+prepare_files_for_upload(folder_path)
 split_videos(folder_path, size_limit="2 GB", delete_corrupted_video=True)
 uploader = VideoUploader(folder_path)
 uploader.init_session()
