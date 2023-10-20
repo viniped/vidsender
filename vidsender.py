@@ -9,7 +9,7 @@ from natsort import natsorted
 from typing import Tuple, Union
 from utils import authenticate, delete_residual_files, Banner, show_banner
 from modules.channel_description import generate_description
-from modules.summary_generator import get_sorted_list_of_files, split_summary, generate_summary
+from summary_generator import get_sorted_list_of_files, split_summary, generate_summary
 from auto_zip import prepare_files_for_upload
 from modules.vidconverter.video_converter import convert_videos_in_folder
 from modules.video_splitter import split_videos
@@ -159,7 +159,7 @@ class VideoUploader:
                 caption = f"#M{index:02} {zip_file.name}"
                 try:
                     self.client.send_document(self.ch_id, file, caption=caption)
-                    zip_file.unlink()
+                    #zip_file.unlink()
                     
                 except Exception as e:
                     print(f"Erro ao enviar {zip_file.name}. Erro: {str(e)}")
