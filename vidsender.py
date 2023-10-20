@@ -7,7 +7,7 @@ from pyrogram import Client, errors
 from pathlib import Path
 from natsort import natsorted
 from typing import Tuple, Union
-from utils import authenticate, delete_residual_files, Banner, show_banner
+from utils import authenticate, delete_residual_files, Banner, show_banner, generate_report
 from modules.channel_description import generate_description
 from summary_generator import get_sorted_list_of_files, split_summary, generate_summary
 from auto_zip import prepare_files_for_upload
@@ -191,6 +191,7 @@ class VideoUploader:
 show_banner()
 authenticate()
 folder_path = input("Informe o caminho da pasta que deseja fazer o upload: ")
+generate_report(folder_path)
 delete_residual_files(folder_path)
 clean_console()
 convert_videos_in_folder(folder_path)

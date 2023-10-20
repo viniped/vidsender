@@ -51,3 +51,31 @@ class Banner:
 def show_banner():
     banner = Banner('Vidsender')
     banner.print_banner()
+
+   
+def generate_report(folder_path):    
+    if not os.path.exists(folder_path):
+        return f"Erro: O caminho '{folder_path}' não existe."
+    
+    total_files = 0
+    total_dirs = 0
+    detailed_list = []
+    
+    for root, dirs, files in os.walk(folder_path):
+        for dir_name in dirs:
+            detailed_list.append(f"Diretório: {os.path.join(root, dir_name)}")
+            total_dirs += 1
+        for file_name in files:
+            detailed_list.append(f"Arquivo: {os.path.join(root, file_name)}")
+            total_files += 1
+    
+    report = f"Relatório de '{folder_path}':\n"
+    report += f"Total de diretórios: {total_dirs}\n"
+    report += f"Total de arquivos: {total_files}\n\n"
+    report += "\n".join(detailed_list)
+    
+    report_file_path = os.path.join(folder_path, "relatorio_conteudo.txt")
+    with open(report_file_path, 'w', encoding='utf-8') as file:
+        file.write(report)
+
+    return f"Relatório salvo em: {report_file_path}"
