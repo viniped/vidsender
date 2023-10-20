@@ -31,7 +31,8 @@ def generate_summary(folder_path: Union[str, Path]) ->  str:
     def video_summary(summary: str, folder: Path, indent: int = 1) -> None:
         for path in natsorted(folder.glob('*')):
             if path.is_file() and path.suffix.lower() == '.mp4':
-                summary += f"#F{folder_path_filtered.index(str(path))} "
+                #summary += f"#F{folder_path_filtered.index(str(path))} "
+                summary += f"#F{folder_path_filtered.index(str(path)) + 1:02} "
             elif path.is_dir():
                 if [f for f in list(path.rglob('*')) if f.suffix.lower() == '.mp4']:
                     summary += '\n'  # Try to fix bug that occurs when files are not in a folder
