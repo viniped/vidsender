@@ -13,6 +13,9 @@ from summary_generator import get_sorted_list_of_files, split_summary, generate_
 from auto_zip import prepare_files_for_upload
 from modules.vidconverter.video_converter import convert_videos_in_folder
 from modules.video_splitter import split_videos
+from concurrent.futures import ThreadPoolExecutor
+
+threads = 4
 
 def clean_console():
     os.system('clear || cls')
@@ -195,7 +198,7 @@ generate_report(folder_path)
 delete_residual_files(folder_path)
 clean_console()
 convert_videos_in_folder(folder_path)
-prepare_files_for_upload(folder_path)
+prepare_files_for_upload(folder_path, threads)
 split_videos(folder_path, size_limit="2 GB", delete_corrupted_video=True)
 uploader = VideoUploader(folder_path)
 uploader.init_session()
