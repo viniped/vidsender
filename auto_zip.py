@@ -1,80 +1,105 @@
 import os
 import shutil
 import zipfile
+from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
+from halo import Halo
 
-def prepare_files_for_upload(folder_path):
-    zip_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zip_files")
-    base_folder_name = os.path.basename(folder_path)
+threads = 4
 
-    # Verificar se há arquivos que não são .mp4 para serem zipados
-    has_files_to_zip = False
-    for root, _, files in os.walk(folder_path):
-        if any(not f.endswith('.mp4') for f in files):
-            has_files_to_zip = True
-            break
-
-    if not has_files_to_zip:
-        print("Não há arquivos a serem zipados.")
-        return
-
-    # Passo 1: Criar pasta zip_files se não existir
-    if not os.path.exists(zip_folder):
-        os.makedirs(zip_folder)
-
-    def get_total_size_of_folder(folder_path):
-        total_size = 0
-        for dirpath, dirnames, filenames in os.walk(folder_path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                total_size += os.path.getsize(fp)
-        return total_size
-
-    def generate_zip_name(base_name, index):
-        return os.path.join(zip_folder, f"{base_name}_materiais_{index:02}.zip")
-
-    def compress_directory(src_dir, zip_name):
-        with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+def compress_directory(src_dir, zip_name, total_size):
+    with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        with tqdm(total=total_size, desc=f"Compactando {zip_name}", unit="B", unit_scale=True) as pbar:            
             for root, _, files in os.walk(src_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
                     arcname = os.path.relpath(file_path, src_dir)
                     zipf.write(file_path, arcname)
+                    pbar.update(os.path.getsize(file_path))
 
-    zip_index = 1
+def create_subfolders(files, max_size):
+    subfolders = []
+    current_subfolder = []
+    current_size = 0
+    for file, size in sorted(files.items(), key=lambda item: -item[1]):
+        if current_size + size > max_size:
+            if current_subfolder:
+                subfolders.append(current_subfolder)
+                current_subfolder = []
+                current_size = 0
+        current_subfolder.append(file)
+        current_size += size
+    if current_subfolder:
+        subfolders.append(current_subfolder)
+    return subfolders
 
-    for root, dirs, files in os.walk(folder_path):
-        # Apenas considerar diretórios que tenham arquivos
-        if not files:
-            continue
+def generate_zip_name(base_name, index, zip_folder):
+    return os.path.join(zip_folder, f"{base_name}_parte_{index:02}.zip")
 
-        # Somente os arquivos que não são .mp4 serão incluídos no zip
-        non_mp4_files = [f for f in files if not f.endswith('.mp4')]
-        
-        if not non_mp4_files:
-            continue
+def prepare_files_for_upload(folder_path, threads):
+    zip_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zip_files")
+    base_folder_name = os.path.basename(folder_path)
 
-        temp_folder = os.path.join(zip_folder, "temp_folder")
-        os.makedirs(temp_folder, exist_ok=True)
+    if not os.path.exists(zip_folder):
+        os.makedirs(zip_folder)
 
-        for file in non_mp4_files:
-            file_path = os.path.join(root, file)
-            relative_path = os.path.relpath(file_path, folder_path)
-            dest_path = os.path.join(temp_folder, relative_path)
-            
-            os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-            shutil.copy(file_path, dest_path)
+    files = {os.path.join(root, file): os.path.getsize(os.path.join(root, file))
+             for root, dirs, files in os.walk(folder_path)
+             for file in files if not file.endswith('.mp4')}
+    
+    if not files:
+        print("Não há arquivos a serem zipados.")
+        return
 
-        while get_total_size_of_folder(temp_folder) > 1.9 * (1024 ** 3):
-            zip_name = generate_zip_name(base_folder_name, zip_index)
-            compress_directory(temp_folder, zip_name)
-            zip_index += 1
-            shutil.rmtree(temp_folder)
+    spinner = Halo(text='Dividindo pastas...', spinner='dots', color='magenta')
+    spinner.start()
+
+    subfolders = []
+    temp_folders = []
+    try:
+        subfolders = create_subfolders(files, 1900 * (1024 ** 2))  # 1900 MB
+
+        for index, subfolder in enumerate(subfolders, start=1):
+            temp_folder = os.path.join(zip_folder, f"temp_folder_{index}")
             os.makedirs(temp_folder, exist_ok=True)
 
-    if os.listdir(temp_folder):
-        zip_name = generate_zip_name(base_folder_name, zip_index)
-        compress_directory(temp_folder, zip_name)
+            total_size = sum(files[file] for file in subfolder)
+            temp_folders.append((temp_folder, total_size))
+            
+            for file in subfolder:
+                relative_path = os.path.relpath(file, folder_path)
+                dest_path = os.path.join(temp_folder, relative_path)
+                os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+                shutil.copy(file, dest_path)
+                
+        spinner.succeed("Pastas divididas com sucesso!")
+    except Exception as e:
+        spinner.fail("Erro ao dividir as pastas.")
+        print(e)
+        return
 
-    shutil.rmtree(temp_folder)
+    
+    try:
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            futures = [
+                executor.submit(
+                    compress_directory, 
+                    temp_folder, 
+                    generate_zip_name(base_folder_name, index, zip_folder), 
+                    total_size
+                ) for index, (temp_folder, total_size) in enumerate(temp_folders, start=1)
+            ]
+            
+            for future in futures:
+                future.result()
 
-    print("Files prepared for upload!")
+        print("Compactação concluída com sucesso!")
+    except Exception as e:
+        print("Erro durante a compactação.")
+        print(e)
+
+    for temp_folder, _ in temp_folders:
+        shutil.rmtree(temp_folder)
+
+    print("Arquivos preparados para upload!")
+
