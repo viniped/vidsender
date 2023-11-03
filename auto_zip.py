@@ -8,7 +8,7 @@ from halo import Halo
 threads = 4
 
 def compress_directory(src_dir, zip_name, total_size):
-    with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_STORED) as zipf:
         with tqdm(total=total_size, desc=f"Compactando {zip_name}", unit="B", unit_scale=True) as pbar:            
             for root, _, files in os.walk(src_dir):
                 for file in files:
@@ -51,7 +51,7 @@ def prepare_files_for_upload(folder_path, threads):
         print("Não há arquivos a serem zipados.")
         return
 
-    spinner = Halo(text='Dividindo pastas...', spinner='dots', color='magenta')
+    spinner = Halo(text='Dividindo Materiais para compactar...', spinner='dots', color='magenta')
     spinner.start()
 
     subfolders = []
@@ -72,9 +72,9 @@ def prepare_files_for_upload(folder_path, threads):
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                 shutil.copy(file, dest_path)
                 
-        spinner.succeed("Pastas divididas com sucesso!")
+        spinner.succeed("Materiais divididos com sucesso!")
     except Exception as e:
-        spinner.fail("Erro ao dividir as pastas.")
+        spinner.fail("Erro ao dividir as pastas com materiais.")
         print(e)
         return
 
@@ -102,4 +102,3 @@ def prepare_files_for_upload(folder_path, threads):
         shutil.rmtree(temp_folder)
 
     print("Arquivos preparados para upload!")
-
