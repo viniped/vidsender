@@ -78,4 +78,19 @@ def generate_report(folder_path):
     with open(report_file_path, 'w', encoding='utf-8') as file:
         file.write(report)
 
-    return f"Relatório salvo em: {report_file_path}"
+    return f"Relatório salvo em: {report_file_path}"    
+    
+def clear_directory(directory_path):
+    if not os.path.exists(directory_path):
+        print(f"A pasta {directory_path} não existe.")
+        return
+
+    for item in os.listdir(directory_path):
+        item_path = os.path.join(directory_path, item)
+        try:
+            if os.path.isdir(item_path):
+                shutil.rmtree(item_path)
+            elif os.path.isfile(item_path):
+                os.remove(item_path)
+        except Exception as e:
+            print(f"Não foi possível deletar {item_path}. Erro: {e}")
