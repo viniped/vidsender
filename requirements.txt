@@ -7,4 +7,5 @@ colorama
 pyfiglet==1.0.2
 rich
 halo
+unidecode
 

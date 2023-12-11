@@ -31,11 +31,14 @@ Crie um aplicativo no Telegram e obtenha seu API ID e API hash. Você será soli
 Coloque seus arquivos de vídeo na pasta que deseja fazer o upload, seguindo a estrutura de pastas desejada.
 Coloque qualquer arquivo .zip que deseja fazer o upload na pasta "zip_files".
 
+## Thumbnail personalizada
+
+Coloque uma foto em 1280 x 720 com o nome thumb.jpg na pasta templates
 
 ## Uso
 
 1. Coloque seus arquivos de vídeo na pasta que deseja fazer o upload
-
+  Atenção: o script não aceita acentuação no nome da pasta principal
 
 2. Execute o script e forneça o nome da pasta que deseja fazer o upload quando solicitado.
 
@@ -53,4 +56,9 @@ Aproveite a organização e o compartilhamento do seu conteúdo audiovisual no T
 ## Caso tenha alguma duvida entre nesse grupo
 
 https://t.me/+uxnB4OwMYPhiNWMx
+
+## Caso o script tenha sua execução interrompida por motivos externos
+
+Informe novamente o caminho da pasta e ele deve retomar da onde parou
+
 

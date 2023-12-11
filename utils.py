@@ -3,8 +3,28 @@ from colorama import Fore
 import pyfiglet
 import random
 from pyrogram import Client
+from unidecode import unidecode
 
 session_name = 'user'
+
+def normalize_filenames(folder_path):
+    for root, dirs, files in os.walk(folder_path):
+        # Normaliza os nomes dos diretórios
+        for dir_name in dirs:
+            normalized_name = unidecode(dir_name)
+            if dir_name != normalized_name:
+                old_path = os.path.join(root, dir_name)
+                new_path = os.path.join(root, normalized_name)
+                os.rename(old_path, new_path)
+
+        # Normaliza os nomes dos arquivos
+        for file_name in files:
+            normalized_name = unidecode(file_name)
+            if file_name != normalized_name:
+                old_path = os.path.join(root, file_name)
+                new_path = os.path.join(root, normalized_name)
+                os.rename(old_path, new_path)
+ 
 
 def delete_residual_files(folder_path):
     for root, dirs, files in os.walk(folder_path):

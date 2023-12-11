@@ -11,7 +11,6 @@ def get_video_info(file_path: str) -> dict:
         "-show_streams",
         file_path
     ]
-
     try:
         output = subprocess.check_output(ffprobe_command).decode('utf-8')
         metadata = json.loads(output)
@@ -50,6 +49,5 @@ def generate_description(folder_path: str) -> str:
     description = (
         f"Tamanho: {total_size_gb:.2f} gb\n"
         f"Duração: {hours}h {minutes}min"
-    )
-    
+    )    
     return description.strip()

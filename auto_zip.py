@@ -7,8 +7,11 @@ from halo import Halo
 
 threads = 4
 
-def compress_directory(src_dir, zip_name, total_size):
-    with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_STORED) as zipf:
+def compress_directory(src_dir, zip_name, total_size, zip_folder):
+    # Caminho completo para o arquivo zip
+    zip_file_path = os.path.join(zip_folder, zip_name)
+
+    with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_STORED) as zipf:
         with tqdm(total=total_size, desc=f"Compactando {zip_name}", unit="B", unit_scale=True) as pbar:            
             for root, _, files in os.walk(src_dir):
                 for file in files:
@@ -33,16 +36,16 @@ def create_subfolders(files, max_size):
         subfolders.append(current_subfolder)
     return subfolders
 
-def generate_zip_name(base_name, index, zip_folder):
-    return os.path.join(zip_folder, f"{base_name}_parte_{index:02}.zip")
+def generate_zip_name(base_name, index):
+    return f"{base_name}_parte_{index:02}.zip"
 
 def prepare_files_for_upload(folder_path, threads):
+    if not os.path.isdir(folder_path):
+        raise ValueError(f"O caminho especificado não é um diretório: {folder_path}")
+    base_folder_name = os.path.basename(folder_path.rstrip("\\/"))  
     zip_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zip_files")
-    base_folder_name = os.path.basename(folder_path)
-
     if not os.path.exists(zip_folder):
         os.makedirs(zip_folder)
-
     files = {os.path.join(root, file): os.path.getsize(os.path.join(root, file))
              for root, dirs, files in os.walk(folder_path)
              for file in files if not file.endswith('.mp4')}
@@ -51,9 +54,8 @@ def prepare_files_for_upload(folder_path, threads):
         print("Não há arquivos a serem zipados.")
         return
 
-    spinner = Halo(text='Dividindo Materiais para compactar...', spinner='dots', color='magenta')
+    spinner = Halo(text='Dividindo pastas...', spinner='dots', color='magenta')
     spinner.start()
-
     subfolders = []
     temp_folders = []
     try:
@@ -72,24 +74,23 @@ def prepare_files_for_upload(folder_path, threads):
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                 shutil.copy(file, dest_path)
                 
-        spinner.succeed("Materiais divididos com sucesso!")
+        spinner.succeed("Pastas divididas com sucesso!")
     except Exception as e:
-        spinner.fail("Erro ao dividir as pastas com materiais.")
+        spinner.fail("Erro ao dividir as pastas.")
         print(e)
         return
 
-    
     try:
         with ThreadPoolExecutor(max_workers=threads) as executor:
             futures = [
                 executor.submit(
                     compress_directory, 
                     temp_folder, 
-                    generate_zip_name(base_folder_name, index, zip_folder), 
-                    total_size
+                    generate_zip_name(base_folder_name, index), 
+                    total_size,
+                    zip_folder  # Adiciona o caminho da pasta zip_folder
                 ) for index, (temp_folder, total_size) in enumerate(temp_folders, start=1)
-            ]
-            
+            ]            
             for future in futures:
                 future.result()
 
