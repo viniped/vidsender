@@ -4,7 +4,7 @@ Este script foi projetado para fazer o upload das suas coleções audiovisuais p
 
 ## Requisitos
 
-- Python 3.x
+- Python 3.10.6 [Python 3.10.6](https://www.python.org/downloads/release/python-3106/)
 - FFmpeg
 
 ## Instalação
@@ -28,16 +28,16 @@ Crie um aplicativo no Telegram e obtenha seu API ID e API hash. Você será soli
 
 ## Configuração
 
-Coloque seus arquivos de vídeo na pasta que deseja fazer o upload, seguindo a estrutura de pastas desejada.
+Coloque seus arquivos de vídeo na pasta input, seguindo a estrutura de pastas pasta principal > subpastas
 Coloque qualquer arquivo .zip que deseja fazer o upload na pasta "zip_files".
 
 
 ## Uso
 
-1. Coloque seus arquivos de vídeo na pasta que deseja fazer o upload
+1. Coloque seus arquivos de vídeo na pasta input
 
 
-2. Execute o script e forneça o nome da pasta que deseja fazer o upload quando solicitado.
+2. Execute o script
 
 3. O script irá organizar e fazer o upload dos vídeos da pasta especificada para um canal do Telegram. Ele também fará o upload de qualquer arquivo `.zip` encontrado na pasta "zip_files".
 

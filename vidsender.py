@@ -1,7 +1,9 @@
 import os
 import json
+import shutil
 import time
 import subprocess
+from renamer import *
 from unidecode import unidecode
 from ffmpy import FFmpeg, FFprobe
 from pyrogram import Client, errors
@@ -19,6 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 threads = 4
 thumbnail_path = Path('templates/thumb.jpg')
+path_to_input = 'input'
 
 def clean_console():
     os.system('clear || cls')
@@ -42,12 +45,12 @@ def update_channel_info(client: Client, ch_desc: str, ch_tile: str) -> Tuple[int
     return dest_id, ch_desc, invite_link
 
 class VideoUploader:
-    def __init__(self, folder_path: str, chat_id: Union[str, int] = None, upload_status=None) -> None:
+    def __init__(self, client: Client, folder_path: str, chat_id: Union[str, int] = None, upload_status=None) -> None:
+        self.client = client
         self.folder_path = folder_path
         self.chat_id = chat_id
         self.upload_status = upload_status if upload_status else self.read_upload_status(folder_path)
 
-    @staticmethod
     def read_upload_status(folder_path):
         json_filename = f"{Path(folder_path).stem}_upload_plan.json"
         try:
@@ -65,23 +68,6 @@ class VideoUploader:
     def update_video_status(self, video_path, status):
         self.upload_status["videos"][video_path]["status"] = status
         self.write_upload_status()
-
-    def init_session(self, session_name: str = "user") -> None:
-        try:
-            self.client = Client(session_name)
-            self.client.start()
-        except (AttributeError, ConnectionError):
-            phone_number = input("\nEnter your phone number: ")
-            api_id = int(input("Enter your API ID: "))
-            api_hash = input("Enter your API hash: ")
-
-            self.client = Client(
-                session_name=session_name,
-                api_id=api_id,
-                api_hash=api_hash.strip(),
-                phone_number=phone_number.strip()
-            )
-            self.client.start()
 
     def collect_video_metadata(self, video_path: str) -> dict:
         if Path(video_path).suffix.lower() != ".mp4":
@@ -112,26 +98,25 @@ class VideoUploader:
             else:
                 title = Path(self.folder_path).name
                 self.ch_id, ch_desc, invite_link = update_channel_info(self.client, generate_description(self.folder_path), title)
-                self.upload_status["channel_id"] = self.ch_id  # Atualiza o channel_id no upload_status
+                self.upload_status["channel_id"] = self.ch_id
                 self.write_upload_status()
         else:
             self.ch_id = int(self.chat_id) if self.chat_id.lstrip('-').isdigit() else self.chat_id
 
         total_videos = sum(1 for folder in sorted_subfolders for _ in folder.rglob('*') if _.is_file() and _.suffix.lower() == '.mp4')
 
-        video_paths = []  # Armazena os caminhos dos vídeos para posterior ordenação
+        video_paths = []
         for folder in sorted_subfolders:
             video_files = [f for f in folder.rglob('*') if f.is_file() and f.suffix.lower() == '.mp4']
             sorted_files = natsorted(video_files, key=lambda file: file.name)
             video_paths.extend(sorted_files)
 
-        # Ordena os vídeos de acordo com os índices do plano de upload
         video_paths = sorted(video_paths, key=lambda video_path: self.upload_status["videos"][str(video_path)]["index"])
 
         for video_path in video_paths:
             video_str_path = str(video_path)
             if self.upload_status["videos"][video_str_path]["status"] == 1:
-                continue  # Se o vídeo já foi enviado, pule
+                continue
 
             metadata = self.collect_video_metadata(video_str_path)
             
@@ -144,8 +129,7 @@ class VideoUploader:
                 else:
                     width, height, duration = None, None, None
             else:
-                continue  # Skip this iteration if 'streams' key is not in metadata
-            
+                continue  
             thumbnail_path = Path('templates/thumb.jpg')
             with open(thumbnail_path, 'rb') as thumb, open(video_path, "rb") as video_file:
                 current_video = self.upload_status['videos'][video_str_path]['index']
@@ -226,30 +210,43 @@ def create_upload_plan(folder_path: str):
     else:
         return VideoUploader.read_upload_status(folder_path)                
 
-def main():
+def main():    
+    session_name = "user"    
+    client = Client(session_name)
+    client.start()
     clean_console()                        
     show_banner()
     authenticate()
-    folder_path = input("Informe o caminho da pasta que deseja fazer o upload: ")
-    upload_status = VideoUploader.read_upload_status(folder_path)
-    if upload_status["videos"]:
-        print("Plano de upload encontrado. Iniciando o upload diretamente...")
-    else:
-        clear_directory('zip_files')
-        normalize_filenames(folder_path)
-        delete_residual_files(folder_path)
-        clean_console()
-        delete_files_with_missing_video_codecs(folder_path)
-        convert_videos_in_folder(folder_path)        
-        split_videos(folder_path, size_limit="2 GB", delete_corrupted_video=True)
-        generate_report(folder_path)
-        prepare_files_for_upload(folder_path, threads)
-        upload_status = create_upload_plan(folder_path)
+    path_to_input = "input"
+    rename_files_and_folders(path_to_input)
+    input_folder_path = Path("input")
+    output_folder_path = Path("output")
+    output_folder_path.mkdir(exist_ok=True)
 
-    uploader = VideoUploader(folder_path, upload_status=upload_status)
-    uploader.init_session()
-    uploader.upload_files()
-    uploader.upload_zip_files()
+    for folder in input_folder_path.iterdir():
+        if folder.is_dir():
+            folder_path = str(folder)
+            upload_status = VideoUploader.read_upload_status(folder_path)
+            if not upload_status["videos"]:
+                clear_directory('zip_files')
+                normalize_filenames(folder_path)
+                delete_residual_files(folder_path)
+                clean_console()
+                delete_files_with_missing_video_codecs(folder_path)
+                convert_videos_in_folder(folder_path)        
+                split_videos(folder_path, size_limit="2 GB", delete_corrupted_video=True)
+                generate_report(folder_path)
+                prepare_files_for_upload(folder_path, 4)
+                upload_status = create_upload_plan(folder_path)
+
+            uploader = VideoUploader(client, folder_path, upload_status=upload_status)            
+            uploader.upload_files()
+            uploader.upload_zip_files()
+
+            shutil.move(folder_path, output_folder_path / folder.name)
+            print(f"Pasta {folder.name} movida para 'output'")
+
+    client.stop()
 
 if __name__ == "__main__":
     main()
