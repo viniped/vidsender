@@ -229,8 +229,6 @@ def main():
             upload_status = VideoUploader.read_upload_status(folder_path)
             if not upload_status["videos"]:
                 clear_directory('zip_files')
-                normalize_filenames(folder_path)
-                delete_residual_files(folder_path)
                 clean_console()
                 delete_files_with_missing_video_codecs(folder_path)
                 convert_videos_in_folder(folder_path)        

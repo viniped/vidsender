@@ -7,35 +7,6 @@ from unidecode import unidecode
 
 session_name = 'user'
 
-def normalize_filenames(folder_path):
-    for root, dirs, files in os.walk(folder_path):
-        # Normaliza os nomes dos diretórios
-        for dir_name in dirs:
-            normalized_name = unidecode(dir_name)
-            if dir_name != normalized_name:
-                old_path = os.path.join(root, dir_name)
-                new_path = os.path.join(root, normalized_name)
-                os.rename(old_path, new_path)
-
-        # Normaliza os nomes dos arquivos
-        for file_name in files:
-            normalized_name = unidecode(file_name)
-            if file_name != normalized_name:
-                old_path = os.path.join(root, file_name)
-                new_path = os.path.join(root, normalized_name)
-                os.rename(old_path, new_path)
- 
-
-def delete_residual_files(folder_path):
-    for root, dirs, files in os.walk(folder_path):
-        for file in files:
-            if file.endswith("_thumb.jpg"):
-                file_path = os.path.join(root, file)
-                try:
-                    os.remove(file_path)
-                except OSError:
-                    pass
-
 def authenticate():
     # Get credentialas from user
     def get_credentials():
@@ -50,7 +21,8 @@ def authenticate():
             print("Você está autenticado!")
     else:
         print("Usando sessão existente.")
-        
+
+
 class Banner:
     def __init__(self, banner):
         self.banner = banner
@@ -61,12 +33,14 @@ class Banner:
         self.r = Fore.RED
         self.n = Fore.RESET
 
+
     def print_banner(self):
         colors = [self.lg, self.r, self.w, self.cy, self.ye]
         f = pyfiglet.Figlet(font='slant')
         banner = f.renderText(self.banner)
         print(f'{random.choice(colors)}{banner}{self.n}')
         print(f'{self.r}  Version: v 1.0.0 https://github.com/viniped \n{self.n}')
+
 
 def show_banner():
     banner = Banner('Vidsender')
