@@ -213,10 +213,10 @@ def create_upload_plan(folder_path: str):
 def main():    
     session_name = "user"    
     client = Client(session_name)
-    client.start()
     clean_console()                        
     show_banner()
     authenticate()
+    client.start()
     path_to_input = "input"
     rename_files_and_folders(path_to_input)
     input_folder_path = Path("input")
