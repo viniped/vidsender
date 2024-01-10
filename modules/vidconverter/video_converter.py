@@ -3,6 +3,7 @@ import subprocess
 from modules.vidconverter.utils import delete_videos_without_duration
 from halo import Halo
 
+
 def get_codec(file_path, stream_type):
     cmd = [
         'ffprobe',
@@ -19,7 +20,6 @@ def convert_file(file_path):
     video_codec = get_codec(file_path, 'v')
     audio_codec = get_codec(file_path, 'a')
 
-    # Skip conversion if video is already in the desired format
     if video_codec == "h264" and audio_codec == "aac" and file_path.lower().endswith(".mp4"):
         return
 
@@ -29,27 +29,39 @@ def convert_file(file_path):
         '-stats',
         '-y',
         '-i', file_path,
-        '-b:a', '128k'
-    ]
-
-    if video_codec != "h264" or audio_codec != "aac":
-        cmd.extend(['-c:v', 'libx264', '-c:a', 'aac', '-preset', 'ultrafast', '-threads', '2'])
-    else:
+        '-b:a', '128k',
+        '-hide_banner'
+          
+    ]  
+     
+    if video_codec == "h264" and audio_codec == "aac":
         cmd.extend(['-c:v', 'copy', '-c:a', 'copy'])
+    
+    elif video_codec != "h264" and audio_codec == "aac":
+        cmd.extend(['-c:v', 'libx264', '-preset', 'ultrafast', '-threads', '2', '-c:a', 'copy','-crf', '23', '-maxrate', '4M'])
+
+    elif video_codec == "h264" and audio_codec != "aac":
+        cmd.extend(['-c:v', 'copy', '-c:a', 'aac', '-preset', 'ultrafast', '-threads', '2','-crf', '23', '-maxrate', '4M'])
+    elif video_codec != "h264" and audio_codec != "aac":
+        cmd.extend(['-c:v', 'h264', '-c:a', 'aac', '-preset', 'ultrafast', '-threads', '2','-crf', '23', '-maxrate', '4M'])
+    else:        
+        cmd.extend(['-c:v', 'h264', '-c:a', 'aac', '-preset', 'ultrafast', '-threads', '2','-crf' '23', '-maxrate' '4M'])
+   
    
     output_file = f"{os.path.splitext(file_path)[0]}_conv.mp4"
     cmd.append(output_file)
     
+    print(cmd)
     subprocess.run(cmd)
     os.remove(file_path)
 
 def convert_videos_in_folder(folder_path):
     delete_videos_without_duration(folder_path)
     
-    videos_to_convert = False
-    
     spinner = Halo(text='Verificando vídeos para conversão...', spinner='dots')
     spinner.start()
+
+    videos_to_convert = []
 
     for subdir, _, files in os.walk(folder_path):
         for file in files:
@@ -60,20 +72,22 @@ def convert_videos_in_folder(folder_path):
                 video_codec = get_codec(file_path, 'v')
                 audio_codec = get_codec(file_path, 'a')
                 
-                # Se os codecs já são h264 e aac e o formato é mp4, pular conversão
-                if video_codec == "h264" and audio_codec == "aac" and file_path.lower().endswith(".mp4"):
-                    continue
-                
-                # Vídeo precisa de conversão
-                spinner.stop()
-                convert_file(file_path)
-                videos_to_convert = True
-                spinner.start()  # Reinicia o spinner para a próxima iteração
-                break  # Sai do loop atual para continuar a verificação no próximo diretório
+                if not (video_codec == "h264" and audio_codec == "aac" and file_path.lower().endswith(".mp4")):
+                    videos_to_convert.append(file_path)
 
-    spinner.stop()  # Para o spinner depois de verificar todos os arquivos
+    spinner.stop()
+
+    total_videos = len(videos_to_convert)
     
-    if not videos_to_convert:
+    if total_videos == 0:
         print("Todos os vídeos já estão no formato correto.")
+        return
     else:
-        print("A conversão dos vídeos foi concluída.")
+        print(f"{total_videos} vídeos precisam ser convertidos.")
+
+    for index, video_path in enumerate(videos_to_convert):
+        remaining_videos = total_videos - index
+        print(f"Vídeos restantes: {remaining_videos}")
+        convert_file(video_path)
+
+    print("A conversão dos vídeos foi concluída.")
