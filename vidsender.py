@@ -180,19 +180,20 @@ class VideoUploader:
             except Exception as e:
                 print(f"Erro ao enviar {zip_file.name}. Erro: {str(e)}")
 
-            summary = generate_summary(self.folder_path)
-            formatted_summary = self.format_summary_from_template(summary)
+        summary = generate_summary(self.folder_path)
+        formatted_summary = self.format_summary_from_template(summary)
 
-            max_length = 4000
-            if len(formatted_summary) > max_length:
-                summaries = split_summary(formatted_summary, max_length)
-                for idx, s in enumerate(summaries):
-                    sent_msg = self.client.send_message(self.ch_id, s)
-                    if idx == 0:
-                        self.client.pin_chat_message(self.ch_id, sent_msg.id)
-            else:
-                sent_msg = self.client.send_message(self.ch_id, formatted_summary)
-                self.client.pin_chat_message(self.ch_id, sent_msg.id)
+        max_length =  4000
+        if len(formatted_summary) > max_length:
+            summaries = split_summary(formatted_summary, max_length)
+            for idx, s in enumerate(summaries):
+                sent_msg = self.client.send_message(self.ch_id, s)
+                if idx ==  0:
+                    self.client.pin_chat_message(self.ch_id, sent_msg.id)
+        else:
+            sent_msg = self.client.send_message(self.ch_id, formatted_summary)
+            self.client.pin_chat_message(self.ch_id, sent_msg.id)
+
 def create_upload_plan(folder_path: str):
     json_filename = f"{Path(folder_path).stem}_upload_plan.json"
     upload_plan_path = Path('projects') / json_filename

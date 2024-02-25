@@ -61,7 +61,7 @@ def generate_summary(folder_path: Union[str, Path]) ->  str:
 
     # Add to the summary only if there are .zip files in the "zip_files" folder
     if zip_summary:
-        summary += "\n== Materiais do Curso\n"
+        summary += "\n\n== Materiais do Curso\n\n"
         summary += zip_summary.rstrip() + "\n"
 
     return summary
