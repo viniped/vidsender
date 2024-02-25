@@ -3,7 +3,7 @@ import json
 import shutil
 import time
 import subprocess
-from renamer import *
+from modules.renamer import *
 from unidecode import unidecode
 from ffmpy import FFmpeg, FFprobe
 from pyrogram import Client, errors
