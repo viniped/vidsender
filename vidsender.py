@@ -24,10 +24,10 @@ thumbnail_path = Path('templates/thumb.jpg')
 path_to_input = 'input'
 
 def clean_console():
-    os.system('clear || cls')
+    os.system ('cls' if os.name == 'nt' else 'clear')
 
 def progress(current, total, video_number, total_videos):
-    os.system('clear || cls')
+    clean_console()
     print(f"Uploading video {video_number}/{total_videos}")
     print(f"{current * 100 / total:.1f}%")
 
