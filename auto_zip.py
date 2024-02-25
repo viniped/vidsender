@@ -1,5 +1,4 @@
-import os
-import shutil
+import os, shutil
 import zipfile
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
