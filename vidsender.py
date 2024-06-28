@@ -13,7 +13,7 @@ from typing import Tuple, Union
 from utils import *
 from modules.channel_description import generate_description
 from modules.summary_generator import *
-from auto_zip import prepare_files_for_upload
+from zip_creator import prepare_files_for_upload
 from modules.vidconverter.video_converter import convert_videos_in_folder
 from modules.video_splitter import split_videos
 from modules.vidconverter.missing_codecs import delete_files_with_missing_video_codecs
