@@ -156,7 +156,7 @@ class VideoUploader:
             print(f"Pasta {zip_folder} não encontrada!")
             return
 
-        zip_files = sorted([f for f in zip_folder.rglob('*') if f.is_file() and f.suffix == '.zip'], key=lambda f: f.stem)
+        zip_files = sorted([f for f in zip_folder.rglob('*') if f.is_file() and re.match(r'.*\.zip\..*', f.name)], key=lambda f: f.stem)
 
         if not zip_files:
             print("Nenhum arquivo .zip encontrado na pasta zip_files!")
