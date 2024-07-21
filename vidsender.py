@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import shutil
 import time
@@ -64,6 +65,7 @@ class VideoUploader:
         self.folder_path = folder_path
         self.chat_id = chat_id
         self.upload_status = upload_status if upload_status else self.read_upload_status(folder_path)
+        self.invite_link = None
 
     def read_upload_status(folder_path):
         json_filename = f"{Path(folder_path).stem}_upload_plan.json"
