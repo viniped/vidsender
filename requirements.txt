@@ -1,8 +1,7 @@
 ffmpy
-pyrogram
+pyrofork
 tgcrypto
 natsort
-zipfile36
 colorama
 pyfiglet==1.0.2
 rich
