@@ -2,6 +2,14 @@ import os
 import subprocess
 from pathlib import Path
 
+video_extensions = [
+    '.mp4', '.ts', '.mpg', '.mpeg', '.avi', '.mkv', '.flv', '.3gp',
+    '.rmvb', '.webm', '.vob', '.ogv', '.rrc', '.gifv', '.mng',
+    '.mov', '.qt', '.wmv', '.yuv', '.rm', '.asf', '.amv', '.m4p',
+    '.m4v', '.mp2', '.mpe', '.mpv', '.m4v', '.svi', '.3g2',
+    '.mxf', '.roq', '.nsv', '.f4v', '.f4p', '.f4a', '.f4b'
+]
+
 def has_duration(file_path):
     ffprobe_cmd = [
         'ffprobe',
