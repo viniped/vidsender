@@ -1,5 +1,4 @@
 import os
-import re
 import json
 import shutil
 import time
@@ -23,20 +22,19 @@ from concurrent.futures import ThreadPoolExecutor
 threads = 4
 path_to_input = 'input'
 
-def clean_console():
-    os.system ('cls' if os.name == 'nt' else 'clear')
+def clear():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def progress(current, total, video_number, total_videos, start_time):
-    clean_console()
+    clear()
     upload_percentage = (current * 100) / total
     elapsed_time = time.time() - start_time
-    upload_speed_mbps = (current * 8) / (1024 * 1024 * elapsed_time) 
-    total_size_mb = total / (1024 * 1024)  
+    upload_speed_mbps = (current * 8) / (1024 * 1024 * elapsed_time)
+    total_size_mb = total / (1024 * 1024)
     print(f"Uploading video {video_number}/{total_videos} {upload_percentage:.1f}% of {total_size_mb:.2f} MB at {upload_speed_mbps:.2f} Mbps")
 
-
 def update_channel_info(client: Client, ch_desc: str, ch_tile: str) -> Tuple[int, str, str]:
-    dest_id = client.create_channel(ch_tile).id    
+    dest_id = client.create_channel(ch_tile).id
     invite_link = client.export_chat_invite_link(dest_id)
     ch_desc = ch_desc + f'\nConvite: {invite_link}'
     time.sleep(10)
@@ -65,8 +63,9 @@ class VideoUploader:
         self.folder_path = folder_path
         self.chat_id = chat_id
         self.upload_status = upload_status if upload_status else self.read_upload_status(folder_path)
-        self.invite_link = None
+        self.invite_link = None  # Inicializando invite_link como None
 
+    @staticmethod
     def read_upload_status(folder_path):
         json_filename = f"{Path(folder_path).stem}_upload_plan.json"
         try:
@@ -102,7 +101,7 @@ class VideoUploader:
         template_path = Path('templates/summary_template.txt')
         with open(template_path, 'r', encoding='utf-8') as template_file:
             template = template_file.read()
-            return template.format(summary_content=summary) 
+            return template.format(summary_content=summary)
 
     def upload_files(self):
         subfolders = [f for f in Path(self.folder_path).iterdir() if f.is_dir()]
@@ -159,7 +158,7 @@ class VideoUploader:
                 current_video = self.upload_status['videos'][video_str_path]['index']
                 caption = f"#F{current_video:02} {video_path.name}"
 
-                start_time = time.time()  
+                start_time = time.time()
 
                 self.client.send_video(
                     self.ch_id,
@@ -195,8 +194,10 @@ class VideoUploader:
         for index, zip_file in enumerate(zip_files, start=1):
             caption = f"#M{index:02} {zip_file.name}"
             try:
+                start_time = time.time()  # Adiciona a variável start_time
+
                 def progress_wrapper(current, total, file_index=index, total_files=len(zip_files)):
-                    progress(current, total, file_index, total_files)
+                    progress(current, total, file_index, total_files, start_time)
 
                 self.client.send_document(
                     self.ch_id,
@@ -211,12 +212,12 @@ class VideoUploader:
         summary = generate_summary(self.folder_path)
         formatted_summary = self.format_summary_from_template(summary)
 
-        max_length =  4000
+        max_length = 4000
         if len(formatted_summary) > max_length:
             summaries = split_summary(formatted_summary, max_length)
             for idx, s in enumerate(summaries):
                 sent_msg = self.client.send_message(self.ch_id, s)
-                if idx ==  0:
+                if idx == 0:
                     self.client.pin_chat_message(self.ch_id, sent_msg.id)
         else:
             sent_msg = self.client.send_message(self.ch_id, formatted_summary)
@@ -227,8 +228,8 @@ def create_upload_plan(folder_path: str):
     upload_plan_path = Path('projects') / json_filename
 
     if not upload_plan_path.exists():
-        video_paths = [str(video_path) for video_path in Path(folder_path).rglob('*.mp4')]            
-        normalized_paths = [unidecode(path) for path in video_paths]            
+        video_paths = [str(video_path) for video_path in Path(folder_path).rglob('*.mp4')]
+        normalized_paths = [unidecode(path) for path in video_paths]
         sorted_paths = natsorted(normalized_paths)
         videos = {video_path: {"status": 0, "index": i + 1} for i, video_path in enumerate(sorted_paths)}
         upload_status = {"channel_id": None, "videos": videos}
@@ -237,12 +238,12 @@ def create_upload_plan(folder_path: str):
             json.dump(upload_status, file, ensure_ascii=False, indent=4)
         return upload_status
     else:
-        return VideoUploader.read_upload_status(folder_path)                
+        return VideoUploader.read_upload_status(folder_path)
 
-def main():    
-    session_name = "user"    
+def main():
+    session_name = "user"
     client = Client(session_name)
-    clean_console()                        
+    clear()
     show_banner()
     authenticate()
     client.start()
@@ -258,15 +259,15 @@ def main():
             upload_status = VideoUploader.read_upload_status(folder_path)
             if not upload_status["videos"]:
                 clear_directory('zip_files')
-                clean_console()
+                clear()
                 delete_files_with_missing_video_codecs(folder_path)
-                convert_videos_in_folder(folder_path)        
+                convert_videos_in_folder(folder_path)
                 split_videos(folder_path, size_limit="2 GB", delete_corrupted_video=True)
                 generate_report(folder_path)
                 prepare_files_for_upload(folder_path, 4)
                 upload_status = create_upload_plan(folder_path)
 
-            uploader = VideoUploader(client, folder_path, upload_status=upload_status)            
+            uploader = VideoUploader(client, folder_path, upload_status=upload_status)
             uploader.upload_files()
             uploader.upload_zip_files()
 
@@ -277,4 +278,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-    input('Finished. Press enter to restart')
+    while True:
+        main()
+        input('Finished. Press enter to restart')
