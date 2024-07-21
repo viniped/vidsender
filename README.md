@@ -29,7 +29,15 @@ Ao utilizar, contribuir, reproduzir parte total ou parcial deste repositório, v
 
 ## Requisitos
 
-- Python 3.10.6 [Python 3.10.6](https://www.python.org/downloads/release/python-3106/)
+# Python
+Para usar esse repositório você precisa instalar o python em sua máquina, siga o passos abaixo:
+
+1. Vá para o [Site do Python](https://www.python.org/)
+2. Na tela inicial clique no botão download, e logo após no botão " Download for Windows " conforme na imagem abaixo :
+
+
+<img src="https://imgur.com/a/Gz8c3wj" alt="home page python">
+
 - FFmpeg
 
 ## Instalação
