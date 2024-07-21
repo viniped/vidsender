@@ -20,16 +20,19 @@ from modules.vidconverter.missing_codecs import delete_files_with_missing_video_
 from concurrent.futures import ThreadPoolExecutor
 
 threads = 4
-thumbnail_path = Path('templates/thumb.jpg')
 path_to_input = 'input'
 
 def clean_console():
     os.system ('cls' if os.name == 'nt' else 'clear')
 
-def progress(current, total, video_number, total_videos):
+def progress(current, total, video_number, total_videos, start_time):
     clean_console()
-    print(f"Uploading video {video_number}/{total_videos}")
-    print(f"{current * 100 / total:.1f}%")
+    upload_percentage = (current * 100) / total
+    elapsed_time = time.time() - start_time
+    upload_speed_mbps = (current * 8) / (1024 * 1024 * elapsed_time) 
+    total_size_mb = total / (1024 * 1024)  
+    print(f"Uploading video {video_number}/{total_videos} {upload_percentage:.1f}% of {total_size_mb:.2f} MB at {upload_speed_mbps:.2f} Mbps")
+
 
 def update_channel_info(client: Client, ch_desc: str, ch_tile: str) -> Tuple[int, str, str]:
     dest_id = client.create_channel(ch_tile).id    
@@ -43,6 +46,17 @@ def update_channel_info(client: Client, ch_desc: str, ch_tile: str) -> Tuple[int
     except errors.ChatNotModified:
         pass
     return dest_id, ch_desc, invite_link
+
+def generate_thumbnail(video_path: str) -> str:
+    thumbnail_path = f"{video_path}_thumb.jpg"
+    if os.path.exists(thumbnail_path):
+        os.remove(thumbnail_path)  # Remove the existing thumbnail if it exists
+    ff = FFmpeg(
+        inputs={video_path: None},
+        outputs={thumbnail_path: '-ss 00:00:02 -vframes 1 -loglevel panic'}
+    )
+    ff.run()
+    return thumbnail_path
 
 class VideoUploader:
     def __init__(self, client: Client, folder_path: str, chat_id: Union[str, int] = None, upload_status=None) -> None:
@@ -97,11 +111,14 @@ class VideoUploader:
                 self.ch_id = self.upload_status["channel_id"]
             else:
                 title = Path(self.folder_path).name
-                self.ch_id, ch_desc, invite_link = update_channel_info(self.client, generate_description(self.folder_path), title)
+                self.ch_id, ch_desc, self.invite_link = update_channel_info(self.client, generate_description(self.folder_path), title)
                 self.upload_status["channel_id"] = self.ch_id
                 self.write_upload_status()
         else:
             self.ch_id = int(self.chat_id) if self.chat_id.lstrip('-').isdigit() else self.chat_id
+
+        if not self.invite_link:
+            self.invite_link = self.client.export_chat_invite_link(self.ch_id)
 
         total_videos = sum(1 for folder in sorted_subfolders for _ in folder.rglob('*') if _.is_file() and _.suffix.lower() == '.mp4')
 
@@ -119,7 +136,7 @@ class VideoUploader:
                 continue
 
             metadata = self.collect_video_metadata(video_str_path)
-            
+
             if 'streams' in metadata:
                 video_stream = next((stream for stream in metadata['streams'] if stream['codec_type'] == 'video'), None)
                 if video_stream:
@@ -129,11 +146,18 @@ class VideoUploader:
                 else:
                     width, height, duration = None, None, None
             else:
-                continue  
+                continue
+
+            # Verifica se a thumbnail padrão existe, se não, gera uma nova
             thumbnail_path = Path('templates/thumb.jpg')
+            if not thumbnail_path.exists():
+                thumbnail_path = generate_thumbnail(str(video_path))
+
             with open(thumbnail_path, 'rb') as thumb, open(video_path, "rb") as video_file:
                 current_video = self.upload_status['videos'][video_str_path]['index']
                 caption = f"#F{current_video:02} {video_path.name}"
+
+                start_time = time.time()  
 
                 self.client.send_video(
                     self.ch_id,
@@ -143,9 +167,11 @@ class VideoUploader:
                     duration=duration,
                     caption=caption,
                     progress=progress,
-                    progress_args=(current_video, total_videos,),
+                    progress_args=(current_video, total_videos, start_time),
                     thumb=thumb
                 )
+
+            os.remove(thumbnail_path)
 
             self.update_video_status(video_str_path, 1)
 
@@ -249,3 +275,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    input('Finished. Press enter to restart')
