@@ -1,4 +1,5 @@
 ﻿import os
+import re
 from pathlib import Path
 from natsort import natsorted
 from typing import List, Union
@@ -54,7 +55,8 @@ def generate_summary(folder_path: Union[str, Path]) ->  str:
     # Process the "zip_files" folder
     zip_root = Path("zip_files")
     zip_summary = ""
-    zip_entries = [entry for entry in zip_root.iterdir() if entry.is_file() and entry.suffix == '.zip']
+    #zip_entries = [entry for entry in zip_root.iterdir() if entry.is_file() and entry.suffix == '.zip']
+    zip_entries = [entry for entry in zip_root.iterdir() if entry.is_file() and re.match(r'.*\.zip\..*', entry.name)]
 
     for i, entry in enumerate(zip_entries):
         zip_summary += f"#M{i+1:02} "

@@ -218,6 +218,10 @@ class VideoUploader:
         summary = generate_summary(self.folder_path)
         formatted_summary = self.format_summary_from_template(summary)
 
+        print(f"Generated summary: {summary}")
+        print(f"Formatted summary: {formatted_summary}")
+        input('Press enter to continue...')
+
         max_length = 4000
         if len(formatted_summary) > max_length:
             summaries = split_summary(formatted_summary, max_length)
@@ -338,6 +342,7 @@ def main():
     input_folder_path = Path("input")
     output_folder_path = Path("output")
     output_folder_path.mkdir(exist_ok=True)
+    rename_files_and_folders(path_to_input)
 
     for folder in input_folder_path.iterdir():
         if folder.is_dir():
