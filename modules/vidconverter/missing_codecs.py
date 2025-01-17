@@ -2,6 +2,9 @@ import os
 import subprocess
 
 def has_video_codec(file_path):
+    """
+    Verifica se o arquivo possui codec de vídeo usando ffprobe.
+    """
     ffprobe_cmd = [
         'ffprobe',
         '-v', 'error',
@@ -19,12 +22,28 @@ def has_video_codec(file_path):
         return False
 
 def delete_files_with_missing_video_codecs(folder_path):
-    for root, _, files in os.walk(folder_path):
-        for file_name in files:
-            file_path = os.path.join(root, file_name)
-            if file_path.lower().endswith((".mp4", ".ts", ".mpg", ".mpeg", ".avi", ".mkv", ".flv", ".3gp", ".rmvb", ".webm", ".vob", ".ogv", ".rrc",
-                                      ".gifv", ".mng", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".asf", ".amv", ".m4p", ".m4v", ".mp2", ".mpe",
-                                      ".mpv", ".m4v", ".svi", ".3g2", ".mxf", ".roq", ".nsv", ".f4v", ".f4p", ".f4a", ".f4b")):
-                if not has_video_codec(file_path):
-                    print(f"Deleting {file_path} (missing video codec)")
-                    os.remove(file_path)
+    """
+    Exclui arquivos de vídeo que não possuem codec de vídeo, usando os.scandir.
+    """
+    video_extensions = {".mp4", ".ts", ".mpg", ".mpeg", ".avi", ".mkv", ".flv", ".3gp", ".rmvb", ".webm", ".vob", 
+                        ".ogv", ".rrc", ".gifv", ".mng", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".asf", ".amv", ".m4p", 
+                        ".m4v", ".mp2", ".mpe", ".mpv", ".svi", ".3g2", ".mxf", ".roq", ".nsv", ".f4v", ".f4p", 
+                        ".f4a", ".f4b"}
+
+    def scan_directory(path):
+        """
+        Escaneia o diretório atual e processa os arquivos recursivamente.
+        """
+        try:
+            with os.scandir(path) as entries:
+                for entry in entries:
+                    if entry.is_dir():
+                        # Recursão para subdiretórios
+                        scan_directory(entry.path)
+                    elif entry.is_file() and entry.name.lower().endswith(tuple(video_extensions)):
+                        if not has_video_codec(entry.path):
+                            print(f"Deleting {entry.path} (missing video codec)")
+                            os.remove(entry.path)
+        except PermissionError:
+            print(f"Permission denied: {path}")
+    scan_directory(folder_path)

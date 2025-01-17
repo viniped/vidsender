@@ -66,15 +66,27 @@ def convert_videos_in_folder(folder_path):
 
     videos_to_convert = []
 
-    for subdir, _, files in os.walk(folder_path):
-        for file in files:
-            if file.lower().endswith(tuple(video_extensions)):
-                file_path = os.path.join(subdir, file)
-                video_codec = get_codec(file_path, 'v')
-                audio_codec = get_codec(file_path, 'a')
-                
-                if not (video_codec == "h264" and audio_codec == "aac" and file_path.lower().endswith(".mp4")):
-                    videos_to_convert.append(file_path)
+    def scan_directory(path):
+        """
+        Escaneia diretórios recursivamente e encontra vídeos que precisam de conversão.
+        """
+        try:
+            with os.scandir(path) as entries:
+                for entry in entries:
+                    if entry.is_dir():
+                        scan_directory(entry.path)  # Recursão para subdiretórios
+                    elif entry.is_file() and entry.name.lower().endswith(tuple(video_extensions)):
+                        file_path = entry.path
+                        video_codec = get_codec(file_path, 'v')
+                        audio_codec = get_codec(file_path, 'a')
+                        
+                        if not (video_codec == "h264" and audio_codec == "aac" and file_path.lower().endswith(".mp4")):
+                            videos_to_convert.append(file_path)
+        except PermissionError:
+            print(f"Permissão negada para acessar o diretório: {path}")
+
+    # Inicia o escaneamento no diretório fornecido
+    scan_directory(folder_path)
 
     spinner.stop()
 

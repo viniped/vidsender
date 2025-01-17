@@ -9,7 +9,7 @@ zip_url = "https://github.com/viniped/vidsender/archive/refs/heads/master.zip"
 
 zip_filename = "master.zip"
 
-folders_to_preserve = ['bin', 'input', 'output', 'projects', 'zip_files', 'templates']
+folders_to_preserve = ['bin', 'input', 'output', 'projects', 'zip_files', 'templates','sessions']
 files_to_preserve = ['user.session', 'user.session-journal']
 
 def download_zip_file(url, dest_path):
