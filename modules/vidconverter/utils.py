@@ -49,6 +49,7 @@ def is_mp3_renamed_as_mp4(file_path):
 def delete_videos_without_duration(folder_path):
     folder_path = Path(folder_path)
     for path in folder_path.rglob('*.mp4'):
-        if path.is_file() and is_mp3_renamed_as_mp4(path):
-            print(f"Deleting {path}")
-            os.remove(str(path))
+        if path.is_file():
+            if is_mp3_renamed_as_mp4(path) or not has_duration(path):
+                print(f"Deleting {path} (No duration or MP3 masquerading as MP4)")
+                os.remove(str(path))
