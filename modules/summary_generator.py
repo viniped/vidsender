@@ -3,6 +3,9 @@ import re
 from pathlib import Path
 from natsort import natsorted
 from typing import List, Union
+from modules.utils import load_letra_sumario
+
+letra = load_letra_sumario()
 
 def get_sorted_list_of_files(folder_path: Path, extension_filter: str = None) -> list:
     if extension_filter:
@@ -33,7 +36,7 @@ def generate_summary(folder_path: Union[str, Path]) ->  str:
         for path in natsorted(folder.glob('*')):
             if path.is_file() and path.suffix.lower() == '.mp4':
                 #summary += f"#F{folder_path_filtered.index(str(path))} "
-                summary += f"#F{folder_path_filtered.index(str(path)) + 1:02} "
+                summary += f"#{letra}{folder_path_filtered.index(str(path)) + 1:02} "
             elif path.is_dir():
                 if [f for f in list(path.rglob('*')) if f.suffix.lower() == '.mp4']:
                     summary += '\n'  # Try to fix bug that occurs when files are not in a folder

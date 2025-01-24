@@ -21,6 +21,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 threads = 4
 path_to_input = 'input'
+letra = utils.load_letra_sumario()
+
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -164,7 +166,7 @@ class VideoUploader:
 
             with open(thumbnail_path, 'rb') as thumb, open(full_path, "rb") as video_file:
                 current_video = self.upload_status["videos"][video_path]["index"]
-                caption = f"#F{current_video:02} {full_path.name}"
+                caption = f"#{letra}{current_video:02} {full_path.name}"
 
                 start_time = time.time()
 
@@ -218,19 +220,19 @@ class VideoUploader:
         summary = generate_summary(self.folder_path)
         formatted_summary = self.format_summary_from_template(summary)
 
-        print(f"Generated summary: {summary}")
-        print(f"Formatted summary: {formatted_summary}")
-        input('Press enter to continue...')
+#        print(f"Generated summary: {summary}")
+#        print(f"Formatted summary: {formatted_summary}")
+#        input('Press enter to continue...')
 
         max_length = 4000
         if len(formatted_summary) > max_length:
             summaries = split_summary(formatted_summary, max_length)
             for idx, s in enumerate(summaries):
-                sent_msg = self.client.send_message(self.ch_id, s)
+                sent_msg = self.client.send_message(self.ch_id, s,disable_web_page_preview=True)
                 if idx == 0:
                     self.client.pin_chat_message(self.ch_id, sent_msg.id)
         else:
-            sent_msg = self.client.send_message(self.ch_id, formatted_summary)
+            sent_msg = self.client.send_message(self.ch_id, formatted_summary, disable_web_page_preview=True)
             self.client.pin_chat_message(self.ch_id, sent_msg.id)
 
 def create_upload_plan(folder_path: str):
@@ -307,15 +309,9 @@ def process_videos_in_folder(client, folder_path):
     garantindo que o plano de upload seja gerado e os vídeos sejam enviados.
     """
     folder_path = Path(folder_path)
-    
-    if not folder_path.exists() or not any(folder_path.rglob('*.mp4')):
-        print(f"Nenhum vídeo encontrado na pasta: {folder_path}")
-        return
-
     main_folder = folder_path if folder_path.parent.name == "input" else Path(path_to_input) / folder_path.parts[1]
     upload_status = VideoUploader.read_upload_status(main_folder)
     if not upload_status["videos"]:  # Se não houver vídeos no plano, criar
-        print(f"Gerando plano de upload para a pasta: {main_folder}")
         utils.clear_directory('zip_files')
         delete_files_with_missing_video_codecs(main_folder)
         convert_videos_in_folder(main_folder)

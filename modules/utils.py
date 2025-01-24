@@ -6,6 +6,15 @@ from pyrogram import Client
 from unidecode import unidecode
 import json
 import shutil
+from pathlib import Path
+
+SCRIPT_PATH = Path(__file__).resolve().parent
+
+def load_letra_sumario():
+    JSON_PATH = SCRIPT_PATH.parent / 'templates' / 'letra_sumario.json'
+    with open(JSON_PATH, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    return data.get("Letra") 
 
 def clean_console():
     os.system("cls" if os.name == "nt" else "clear")
