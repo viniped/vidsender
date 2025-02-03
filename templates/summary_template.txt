@@ -6,7 +6,7 @@ Utilize as # para saltar entre os vídeos.
 {summary_content}
 
 
-Upload via app [Vidsender](https://github.com/viniped/vidsender) por <Nome do seu canal>
+Upload via app vidsender por <Nome do seu canal>
 Conteudo Disponibilizado gratuitamente.
 
 Bons estudos!

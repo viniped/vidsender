@@ -8,6 +8,3 @@ rich
 halo
 unidecode
 tqdm
-zipfile36
-requests
-

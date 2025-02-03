@@ -35,8 +35,8 @@ def prepare_files_for_upload(folder_path, threads):
     if not os.path.isdir(folder_path):
         raise ValueError(f"O caminho especificado não é um diretório: {folder_path}")
 
-    # Converte folder_path para string antes de usar rstrip
-    base_folder_name = os.path.basename(str(folder_path).rstrip("\\/"))
+    # O nome base é extraído do nome da pasta fornecida
+    base_folder_name = os.path.basename(folder_path.rstrip("\\/"))
 
     # Caminho para o diretório onde os arquivos zip serão salvos
     zip_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zip_files")
