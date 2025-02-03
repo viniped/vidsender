@@ -11,7 +11,6 @@ from pyrogram import Client, errors
 from pathlib import Path
 from natsort import natsorted
 from typing import Tuple, Union
-from utils import *
 from modules.channel_description import generate_description
 from modules.summary_generator import *
 from zip_creator import prepare_files_for_upload
