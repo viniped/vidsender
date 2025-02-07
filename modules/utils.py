@@ -82,7 +82,7 @@ def show_banner():
 
 def generate_report(folder_path):
     """
-    Gera um relatório detalhado do conteúdo de um diretório usando os.scandir, em ordem sequencial.
+    Gera um relatório detalhado do conteúdo de um diretório com formato hierárquico, usando ícones para pastas e arquivos.
     """
     if not os.path.exists(folder_path):
         return f"Erro: O caminho '{folder_path}' não existe."
@@ -91,40 +91,40 @@ def generate_report(folder_path):
     total_dirs = 0
     detailed_list = []
 
-    def scan_directory(path):
+    def scan_directory(path, level=0):
         """
         Escaneia o diretório atual, adiciona arquivos e diretórios à lista detalhada.
+        Representa pastas com '📁' e arquivos com '📄', além de criar uma estrutura hierárquica.
         """
         nonlocal total_files, total_dirs
         try:
             with os.scandir(path) as entries:
-                entries = sorted(entries, key=lambda e: e.name)  # Ordena por nome
+                entries = sorted(entries, key=lambda e: e.name)
                 for entry in entries:
+                    indent = '│   ' * level  
                     if entry.is_dir():
-                        detailed_list.append(f"Diretório: {entry.path}")
+                        detailed_list.append(f"{indent}├───📁 {entry.name}/")
                         total_dirs += 1
-                        scan_directory(entry.path)  # Recursão para subdiretórios
+                        scan_directory(entry.path, level + 1)  
                     elif entry.is_file():
-                        detailed_list.append(f"Arquivo: {entry.path}")
+                        detailed_list.append(f"{indent}├───📄 {entry.name}")
                         total_files += 1
         except PermissionError:
             detailed_list.append(f"Sem permissão para acessar: {path}")
 
-    # Inicia a varredura no diretório especificado
     scan_directory(folder_path)
 
-    # Cria o relatório
     report = f"Relatório de '{folder_path}':\n"
     report += f"Total de diretórios: {total_dirs}\n"
     report += f"Total de arquivos: {total_files}\n\n"
     report += "\n".join(detailed_list)
 
-    # Salva o relatório no arquivo "relatorio_conteudo.txt"
     report_file_path = os.path.join(folder_path, "relatorio_conteudo.txt")
     with open(report_file_path, 'w', encoding='utf-8') as file:
         file.write(report)
 
     return f"Relatório salvo em: {report_file_path}"
+
 
     
 def clear_directory(directory_path):

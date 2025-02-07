@@ -323,6 +323,7 @@ def main():
                 delete_files_with_missing_video_codecs(folder_path)
                 convert_videos_in_folder(folder_path)        
                 split_videos(folder_path, size_limit="2 GB", delete_corrupted_video=True)
+                utils.generate_report(folder_path)
                 prepare_files_for_upload(folder_path,   4)
                 upload_status = create_upload_plan(folder_path)
                 
@@ -333,8 +334,11 @@ def main():
             invite_link = client.export_chat_invite_link(uploader.ch_id)
             ch_desc = generate_description(folder_path)
             client_bot.start()
-            send_invite(client_bot, channel_ids, folder_path, invite_link, ch_desc)
-            send_sticker(client_bot, channel_ids, sticker_id)
+            if channel_ids :
+                send_invite(client_bot, channel_ids, folder_path, invite_link, ch_desc)
+                send_sticker(client_bot, channel_ids, sticker_id)
+            else:
+                pass
             client_bot.stop()
             shutil.move(folder_path, output_folder_path / folder.name)
             print(f"Pasta {folder.name} movida para 'output'")
