@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
@@ -7,12 +8,24 @@ import platform
 
 threads = 4
 
-bin_path = os.path.join(os.path.dirname(__file__), 'bin')
+def resource_path(relative_path):
+    """Resolve o caminho corretamente para recursos em modo .py e modo PyInstaller (.exe)"""
+    try:
+        base_path = sys._MEIPASS  # quando for executável PyInstaller
+    except AttributeError:
+        base_path = os.path.abspath(".")  # quando for script Python
+    return os.path.join(base_path, relative_path)
+
+bin_path = resource_path('bin')
 
 def get_executable_path(executable_name):
-    """Returns the appropriate path for an executable based on the operating system."""
+    """Retorna o caminho do executável, usando a pasta local 'bin' se for Windows."""
     if platform.system() == 'Windows':
-        return os.path.join(bin_path, f"{executable_name}.exe")
+        exe_path = os.path.join(bin_path, f"{executable_name}.exe")
+        if os.path.isfile(exe_path):
+            return exe_path
+        else:
+            raise FileNotFoundError(f"Executável '{exe_path}' não encontrado.")
     else:
         return shutil.which(executable_name)
 
@@ -31,31 +44,24 @@ def compress_directory_with_7zip(src_dir, zip_name, zip_folder, part_size_mib):
     subprocess.run(command, check=True)
 
 def prepare_files_for_upload(folder_path, threads):
-    # Verifica se o folder_path é um diretório
     if not os.path.isdir(folder_path):
         raise ValueError(f"O caminho especificado não é um diretório: {folder_path}")
 
-    # O nome base é extraído do nome da pasta fornecida
     base_folder_name = os.path.basename(folder_path.rstrip("\\/"))
+    zip_folder = os.path.join(os.getcwd(), "zip_files")
 
-    # Caminho para o diretório onde os arquivos zip serão salvos
-    zip_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zip_files")
 
-    # Cria o diretório zip_folder se ele não existir
     if not os.path.exists(zip_folder):
         os.makedirs(zip_folder)
 
-    # Cria uma pasta temporária para copiar os arquivos não .mp4
     temp_folder = os.path.join(zip_folder, 'temp_folder')
     if os.path.exists(temp_folder):
         shutil.rmtree(temp_folder)
     os.makedirs(temp_folder)
 
-    # Cria uma subpasta 'materiais' dentro da pasta temporária
     materiais_folder = os.path.join(temp_folder, 'materiais')
     os.makedirs(materiais_folder)
 
-    # Copia os arquivos não .mp4 para a subpasta 'materiais'
     for root, _, files in os.walk(folder_path):
         for file in files:
             if not file.endswith('.mp4'):
@@ -65,7 +71,6 @@ def prepare_files_for_upload(folder_path, threads):
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                 shutil.copy(file_path, dest_path)
 
-    # Verifica se há arquivos na pasta 'materiais'
     if not any(os.scandir(materiais_folder)):
         print("Não há arquivos a serem zipados.")
         return
@@ -94,7 +99,6 @@ def prepare_files_for_upload(folder_path, threads):
         print(e)
         return
     finally:
-        # Remove a pasta temporária
         shutil.rmtree(temp_folder)
 
     print("Arquivos preparados para upload!")
