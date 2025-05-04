@@ -3,14 +3,14 @@ name: Build & Release Executável
 on:
   push:
     tags:
-      - 'v*'  # ex: v1.0, v2.1.3, etc.
+      - 'v*'
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout código
+    - name: Checkout do código
       uses: actions/checkout@v3
 
     - name: Instalar Python
@@ -18,24 +18,21 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Criar ambiente virtual e instalar dependências
+    - name: Criar venv, instalar dependências e compilar
+      shell: cmd
       run: |
         python -m venv venv
-        .\venv\Scripts\activate
-        python -m pip install --upgrade pip
+        call venv\Scripts\activate
+        pip install --upgrade pip
         pip install -r requirements.txt
         pip install pyinstaller
-
-    - name: Compilar com PyInstaller
-      run: |
-        .\venv\Scripts\activate
         pyinstaller --onefile ^
           --add-data "templates\\letra_sumario.json;templates" ^
           --add-data "bin\\7z.exe;bin" ^
           --add-data "venv\\Lib\\site-packages\\pyfiglet\\fonts;pyfiglet\\fonts" ^
           vidsender.py
 
-    - name: Criar Release e fazer upload do executável
+    - name: Publicar executável na Release
       uses: softprops/action-gh-release@v1
       with:
         files: dist/vidsender.exe
