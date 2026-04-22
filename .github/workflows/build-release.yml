@@ -1,40 +1,28 @@
-name: Build & Release Executável
-
-on:
-  push:
-    tags:
-      - 'v*'
+name: Build EXE
+on: [push]
 
 jobs:
   build:
-    runs-on: windows-latest
-
+    runs-on: windows-latest  # Use Windows to generate a .exe file
     steps:
-    - name: Checkout do código
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Instalar Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: Criar venv, instalar dependências e compilar
-      shell: cmd
-      run: |
-        python -m venv venv
-        call venv\Scripts\activate
-        pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller
-        pyinstaller --onefile ^
-          --add-data "templates\\letra_sumario.json;templates" ^
-          --add-data "bin\\7z.exe;bin" ^
-          --add-data "venv\\Lib\\site-packages\\pyfiglet\\fonts;pyfiglet\\fonts" ^
-          vidsender.py
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller -r requirements.txt  # Ensure your script's dependencies are listed
 
-    - name: Publicar executável na Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: dist/vidsender.exe
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build with PyInstaller
+        run: pyinstaller --onefile vidsender.py  # Replace 'main.py' with your script name
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-executable
+          path: dist/*.exe
