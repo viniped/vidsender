@@ -176,7 +176,16 @@ class VideoUploader:
                 self.upload_status["channel_id"] = self.ch_id
                 self.write_upload_status()
         else:
-            self.ch_id = int(self.chat_id) if self.chat_id.lstrip('-').isdigit() else self.chat_id
+            # Garante que o ID seja inteiro se for numérico
+            self.ch_id = int(self.chat_id) if str(self.chat_id).lstrip('-').isdigit() else self.chat_id
+            
+            # FORÇA O CLIENTE A CONHECER O CANAL (Resolve o erro resolve_peer)
+            try:
+                chat_info = self.client.get_chat(self.ch_id)
+                self.ch_id = chat_info.id # Usa o ID retornado pelo Telegram que é mais seguro
+            except Exception as e:
+                print(f"Erro ao localizar canal {self.ch_id}: {e}")
+                return # Interrompe se não achar o canal
 
         # Processa os vídeos em ordem do plano de upload
         total_videos = len(sorted_videos)
